@@ -6,10 +6,7 @@ METEOR_DN   EQU %01011100
 
             ; data in groups of 6
             DB LSPC,LSPC,LSPC,LSPC,LSPC
-            DB METEOR_DN
-
+DATAROCK    DB METEOR_DN
             DB LSPC,LSPC,LSPC,LSPC,LSPC
-            DB METEOR_UP
-
             DB DATATERM
 

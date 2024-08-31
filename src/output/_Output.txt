@@ -298,14 +298,11 @@
   295 |  5 include/data-level-1.asm      7 | Comment     | 11 |         |    0 | 00/025B               |             ; data in groups of 6
   296 |  5 include/data-level-1.asm      8 | Data        | 11 |         |    5 | 00/025B : 00 00 00 00 |             DB    {$00},{$00},{$00},{$00},{$00}
       |                                    |             |    |         |      |           00          |
-  297 |  5 include/data-level-1.asm      9 | Data        | 11 |         |    1 | 00/0260 : 5C          |             DB    {%01011100}    
-  298 |  5 include/data-level-1.asm     10 | Empty       | 11 |         |    0 | 00/0261               |                                  
-  299 |  5 include/data-level-1.asm     11 | Data        | 11 |         |    5 | 00/0261 : 00 00 00 00 |             DB    {$00},{$00},{$00},{$00},{$00}
+  297 |  5 include/data-level-1.asm      9 | Data        | 11 |         |    1 | 00/0260 : 5C          | DATAROCK    DB    {%01011100}    
+  298 |  5 include/data-level-1.asm     10 | Data        | 11 |         |    5 | 00/0261 : 00 00 00 00 |             DB    {$00},{$00},{$00},{$00},{$00}
       |                                    |             |    |         |      |           00          |
-  300 |  5 include/data-level-1.asm     12 | Data        | 11 |         |    1 | 00/0266 : 63          |             DB    {%01100011}    
+  299 |  5 include/data-level-1.asm     11 | Data        | 11 |         |    1 | 00/0266 : EA          |             DB    {$EA}          
+  300 |  5 include/data-level-1.asm     12 | Empty       | 11 |         |    0 | 00/0267               |                                  
   301 |  5 include/data-level-1.asm     13 | Empty       | 11 |         |    0 | 00/0267               |                                  
-  302 |  5 include/data-level-1.asm     14 | Data        | 11 |         |    1 | 00/0267 : EA          |             DB    {$EA}          
-  303 |  5 include/data-level-1.asm     15 | Empty       | 11 |         |    0 | 00/0268               |                                  
-  304 |  5 include/data-level-1.asm     16 | Empty       | 11 |         |    0 | 00/0268               |                                  
-  305 |  1               rocket.asm    112 | Empty       | 11 |         |    0 | 00/0268               |                                  
+  302 |  1               rocket.asm    112 | Empty       | 11 |         |    0 | 00/0267               |                                  
 ------+------------------------------------+-------------+----+---------+------+-----------------------+----------------------------------------------------------------------
