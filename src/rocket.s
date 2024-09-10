@@ -8,15 +8,15 @@
 ;       None
 ;
 ; Assembler:
-;       Merlin32 compiler by Brutal Delux
-;       https://www.brutaldeluxe.fr/products/crossdevtools/merlin/index.html
-;       Load to $0200
+;       cc65,ca65 
+;       https://cc65.github.io/doc/ca65.html
+;
 ;
 ;-----------------------------------------------------------------------------
 ; Date          Comment
 ;-----------------------------------------------------------------------------
 ; 10.08.2024    Created for the Merlin32 compiler by Brutal Delux
-;
+; 10:09.2024    Converted to CA65 from Merlin 32
 ;
 ;=============================================================================
 
