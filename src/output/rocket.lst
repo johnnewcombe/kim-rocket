@@ -1,0 +1,357 @@
+ca65 V2.18 - N/A
+Main file   : rocket.s
+Current file: rocket.s
+
+000000r 1               ;=============================================================================
+000000r 1               ; Display Example (c) J.L.Newcombe 2024 (mostly)
+000000r 1               ;
+000000r 1               ; Based on examples by Aart Bik
+000000r 1               ;      https://github.com/maksimKorzh/KIM-1/blob/main/software/Hello/hello.asm
+000000r 1               ;
+000000r 1               ; Licence:
+000000r 1               ;       None
+000000r 1               ;
+000000r 1               ; Assembler:
+000000r 1               ;       Merlin32 compiler by Brutal Delux
+000000r 1               ;       https://www.brutaldeluxe.fr/products/crossdevtools/merlin/index.html
+000000r 1               ;       Load to $0200
+000000r 1               ;
+000000r 1               ;-----------------------------------------------------------------------------
+000000r 1               ; Date          Comment
+000000r 1               ;-----------------------------------------------------------------------------
+000000r 1               ; 10.08.2024    Created for the Merlin32 compiler by Brutal Delux
+000000r 1               ;
+000000r 1               ;
+000000r 1               ;=============================================================================
+000000r 1               
+000000r 1                           .org $0200       ;
+000200  1               
+000200  1                           .include "include/kim-symbols.s"
+000200  2               ; ROM ROUTINES **
+000200  2               
+000200  2               AK      =  $1EFE          ; Check for key depressed. A non-zero: no key down. A equal 0, key down.
+000200  2               SCAND   =  $1F19          ; Display address and contents.
+000200  2               SCANDS  =  $1F1F          ; Output six hex characters on display. Stored in $00F9, $00FA, $00FB.
+000200  2               CONVD   =  $1F48          ; Output HEX digit
+000200  2               OUTPUT  =  $1F4E          ; Output 7 segment code stored in A register (to lit up a custom segment)
+000200  2               KEYIN   =  $1F40          ; Open up keyboard channel. Call before using GETKEY (or call SCANDS).
+000200  2               INCPT   =  $1F63          ; Increment display address.
+000200  2               GETKEY  =  $1F6A          ; Return key from keyboard. Value 0-F, 10(AD), 11(DA), 12(+), 13(GO), 14(PC), 15 (no keypress).
+000200  2               TABLE   =  $1FE7          ; Table of 7-segment patterns.
+000200  2               SAVE    =  $1C00          ; Normal interrupt entry point.
+000200  2               RST     =  $1C22          ; Reset return to monitor.
+000200  2               START   =  $1C4F          ; Return to monitor entry
+000200  2               
+000200  2               ; IO
+000200  2               
+000200  2               SAD     = $1740           ; 6530 A DATA
+000200  2               PADD    = $1741           ; 6530 A DATA DIRECTION
+000200  2               SBD     = $1742           ; 6530 B DATA
+000200  2               PBDD    = $1743           ; 6530 B DATA DIRECTION
+000200  2               CLK1T   = $1744           ; DIV BY 1 TIME
+000200  2               CLK8T   = $1745           ; DIV BY 8 TIME
+000200  2               CLK64T  = $1746           ; DIV BY 64 TIME
+000200  2               CLKKT   = $1747           ; DIV BY 1024 TIME
+000200  2               CLKRDI  = $1747           ; READ TIME OUT BIT
+000200  2               CLKRDT  = $1746           ; READ TIME
+000200  2               
+000200  2               ; MPU REG SAVX AREA IN PAGE 0
+000200  2               
+000200  2               PCL     = $EF             ; PROGRAM CNT LOW
+000200  2               PCH     = $F0             ; PROGRAM CNT HI
+000200  2               PREG    = $F1             ; CURRENT STATUS REG
+000200  2               SPUSER  = $F2             ; CURRENT STACK POINTER
+000200  2               ACC     = $F3             ; ACCUMULATOR
+000200  2               YREG    = $F4             ; Y INDEX
+000200  2               XREG    = $F5             ; X INDEX
+000200  2               
+000200  2                   ;       KIM FIXED AREA IN PAGE 0
+000200  2               
+000200  2               CHKHI   = $F6
+000200  2               CHKSUM  = $F7
+000200  2               INL     = $F8             ; INPUT BUFFER
+000200  2               INH     = $F9             ; INPUT BUFFER
+000200  2               POINTL  = $FA             ; LSB OF OPEN CELL
+000200  2               POINTH  = $FB             ; MSB OF OPEN CELL
+000200  2               TEMP    = $FC
+000200  2               TMPX    = $FD
+000200  2               CHAR    = $FE
+000200  2               MODE    = $FF
+000200  2               
+000200  2                   ;       KIM FIXED AREA IN PAGE 23
+000200  2               
+000200  2               CHKL    = $17E7
+000200  2               CHKH    = $17E8           ; CHKSUM
+000200  2               SAVX    = $17E9
+000200  2               VEB     = $17EC           ; VOLATILE EXECUTION BLOCK
+000200  2               CNTL30  = $17F2           ; TTY DELAY
+000200  2               CNTH30  = $17F3           ; TTY DELAY
+000200  2               TIMH    = $7F4
+000200  2               SAL     = $17F5           ; LOW STARTING ADDRESS
+000200  2               SAH     = $17F6           ; HI STARTING ADDRESS
+000200  2               EAL     = $17F7           ; LOW ENDING ADDRESS;
+000200  2               EAH     = $17F8           ; HI ENDING ADDRESS
+000200  2               ID      = $17F9           ; TAPE PROGRAM ID NUMBER
+000200  2               
+000200  2                   ;       INTERRUPT VECTORS
+000200  2               
+000200  2               NMIV    = $17FA           ; STOP VECTOR (STOP=1C00)
+000200  2               RSTV    = $17FC           ; RST VECTOR
+000200  2               IRQV    = $17FE           ; IRQ VECTOR (BRK= 1C00)
+000200  2               
+000200  2                   ;       SEVEN SEGMENT DISPLAYS
+000200  2               
+000200  2               SEG1   = $09
+000200  2               SEG2   = $0B
+000200  2               SEG3   = $0D
+000200  2               SEG4   = $0F
+000200  2               SEG5   = $11
+000200  2               SEG6   = $13
+000200  2               
+000200  2                   ;       SEGMENT LED LETTERS
+000200  2               
+000200  2                   ; Relationship between bit and segment
+000200  2                   ;
+000200  2                   ;  | -0- |
+000200  2                   ;  5     1
+000200  2                   ;  | -6- |
+000200  2                   ;  4     2
+000200  2                   ;  | -3- |
+000200  2               
+000200  2               ; e.g. a lower case 'd' would include bits 1,2,3,4,6 = 1101 1110 = $5E
+000200  2               
+000200  2               ; Upper Case Letters
+000200  2               
+000200  2               LA = $77
+000200  2               LB = $7F
+000200  2               LC = $39
+000200  2               LD = $3F
+000200  2               LE = $79
+000200  2               LF = $71
+000200  2               LG = $3D
+000200  2               LH = $76 ;01110110
+000200  2               LI = $06 ;00000110
+000200  2               LJ = $1E
+000200  2               ; LK
+000200  2               LL = $38
+000200  2               ; LM
+000200  2               LN = $37 ;00110111
+000200  2               LO = $3F ;00111111
+000200  2               LP = $73
+000200  2               ; LQ
+000200  2               LR = $31  ;00110001
+000200  2               LS = $6D
+000200  2               LT = $78
+000200  2               LU = $3E
+000200  2               ; LV
+000200  2               ; LW
+000200  2               ; LX
+000200  2               LY = $6E
+000200  2               ; LZ
+000200  2               
+000200  2               ; Lower Case Letters
+000200  2               
+000200  2               La = $5F  ;01011111
+000200  2               Lb = $7C
+000200  2               Lc = $58
+000200  2               Ld = $5E
+000200  2               Le = $7B  ;01111011
+000200  2               Lf = $71
+000200  2               Lg = $6F
+000200  2               Lh = $74
+000200  2               Li = $04
+000200  2               Lj = $1E  ;
+000200  2               ; Lk
+000200  2               Ll = $06
+000200  2               ; Lm
+000200  2               Ln = $54  ;01010100
+000200  2               Lo = $5C  ;01011100
+000200  2               Lp = $73
+000200  2               ; Lq
+000200  2               Lr = $50  ;01010000
+000200  2               Ls = $6D
+000200  2               Lt = $78
+000200  2               Lu = $1C
+000200  2               ; Lv
+000200  2               ; Lw
+000200  2               ; Lx
+000200  2               Ly = $6E
+000200  2               ; Lz
+000200  2               
+000200  2               L1 = $86
+000200  2               L2 = $DB
+000200  2               L3 = $CF
+000200  2               L4 = $E6
+000200  2               L5 = $ED
+000200  2               L6 = $FD
+000200  2               L7 = $87
+000200  2               L8 = $FF
+000200  2               L9 = $EF
+000200  2               L0 = $BF
+000200  2               
+000200  2               LSPC = $00
+000200  2               LDASH = $40
+000200  2               
+000200  2               
+000200  2               
+000200  1                           .include "include/defs.s"
+000200  2               ;-----------------------------------------------------------------------------
+000200  2               ; Application Equates
+000200  2               ;-----------------------------------------------------------------------------
+000200  2               
+000200  2               DATAINDEX   = $02             ; start index
+000200  2               DATATERM    = $EA             ; data terminator
+000200  2               
+000200  2               SHIPTOP     = %00000001
+000200  2               SHIPMID     = %01000000
+000200  2               SHIPBOT     = %00001000
+000200  2               
+000200  2               
+000200  1                           .include "include/macros.s"
+000200  2               
+000200  1               
+000200  1               ;-----------------------------------------------------------------------------
+000200  1               ; Initialise
+000200  1               ;-----------------------------------------------------------------------------
+000200  1               
+000200  1  58                       cli
+000201  1  D8                       cld
+000202  1               
+000202  1  A9 7F                    lda #$7f            ; set directional registers
+000204  1  8D 41 17                 sta PADD
+000207  1                           ;lda #$3f
+000207  1                           ;sta PBDD
+000207  1               
+000207  1  A9 00                    lda #$00            ; store initial value for Y in zero page
+000209  1  85 00                    sta $00
+00020B  1               
+00020B  1  A9 40                    lda #SHIPMID        ; put the space ship in the middle
+00020D  1  85 01                    sta $01
+00020F  1               
+00020F  1  A9 FF                    lda #$FF
+000211  1  8D 07 17                 sta $1707          ; set timer division
+000214  1               
+000214  1               ;-----------------------------------------------------------------------------
+000214  1               DISPLOOP
+000214  1               ;-----------------------------------------------------------------------------
+000214  1                           ; TODO consider adding lead-in and lead-out programmatically
+000214  1                           ;  rather than spaces in the data
+000214  1               
+000214  1  A4 00                    ldy $00             ; initialise character offset from Zero Page
+000216  1  A2 09                    ldx #$09            ; value representing the left most 7 segment
+000218  1               
+000218  1               ;-----------------------------------------------------------------------------
+000218  1               CHARLOOP
+000218  1               ;-----------------------------------------------------------------------------
+000218  1               
+000218  1  A9 00                    lda #$00
+00021A  1  8D 40 17                 sta SAD             ; do it this way
+00021D  1  8E 42 17                 stx SBD             ;   to remove flicker
+000220  1  B9 73 02                 lda DATA,y
+000223  1  C9 EA                    cmp #$EA            ; check for data terminator
+000225  1  D0 07                    bne NOTERM
+000227  1  A9 00                    lda #$00            ; no more data so reset ZP index
+000229  1  85 00                    sta $00
+00022B  1  4C 70 02                 jmp DONE            ; all done
+00022E  1               
+00022E  1               NOTERM
+00022E  1                           ; if we are the first display segment we need to add the space ship
+00022E  1  E0 09                    cpx #$09            ; first segment?
+000230  1  D0 02                    bne DISP
+000232  1  05 01                    ora $01
+000234  1  8D 40 17     DISP        sta SAD
+000237  1               
+000237  1               ;-----------------------------------------------------------------------------
+000237  1               ; delay to allow the LEDs to reach full brightness
+000237  1               ;-----------------------------------------------------------------------------
+000237  1  98                       tya                 ; delay added to allow the led to fully light
+000238  1  A0 04                    ldy #$04            ;   helps a little with the genuine KIM-1
+00023A  1               CHARDELAY
+00023A  1  88                       dey
+00023B  1  D0 FD                    bne CHARDELAY       ; glow up character
+00023D  1  A8                       tay
+00023E  1               ;-----------------------------------------------------------------------------
+00023E  1               
+00023E  1               
+00023E  1               ;-----------------------------------------------------------------------------
+00023E  1               ; Detecting key '3' (UP) and key '7' (DOWN) after each segment update
+00023E  1               ;-----------------------------------------------------------------------------
+00023E  1  8A                       txa
+00023F  1  48                       pha
+000240  1  98                       tya
+000241  1  48                       pha
+000242  1               
+000242  1               KEYS
+000242  1                           ;jsr KEYIN
+000242  1  20 6A 1F                 jsr GETKEY
+000245  1  A9 7F                    lda #$7f            ; re-set directional registers
+000247  1  8D 41 17                 sta PADD
+00024A  1                           ;lda #$3f
+00024A  1                           ;sta PBDD
+00024A  1               
+00024A  1  C9 03                    cmp #$03            ; down
+00024C  1  D0 05                    bne KEYUP
+00024E  1  A9 08                    lda #SHIPBOT        ; bottom segment
+000250  1  4C 59 02                 jmp KDONE1
+000253  1               
+000253  1  C9 07        KEYUP       cmp #$07            ; up
+000255  1  D0 04                    bne KDONE
+000257  1  A9 01                    lda #SHIPTOP        ; top segment
+000259  1               
+000259  1  85 01        KDONE1      sta $01             ; store the current space ship char
+00025B  1               
+00025B  1               KDONE
+00025B  1               
+00025B  1               
+00025B  1  68                       pla
+00025C  1  A8                       tay
+00025D  1  68                       pla
+00025E  1  AA                       tax
+00025F  1               ;-----------------------------------------------------------------------------
+00025F  1               
+00025F  1               
+00025F  1               
+00025F  1  C8                       iny                 ; increase count
+000260  1  E8                       inx                 ; move to nex 7 segment
+000261  1  E8                       inx
+000262  1  E0 15                    cpx #$15            ; beyond last segment so
+000264  1  D0 B2                    bne CHARLOOP        ; next character
+000266  1               
+000266  1               
+000266  1               
+000266  1               
+000266  1               ;-----------------------------------------------------------------------------
+000266  1               ; all segments done, check timer, and start again to refresh display
+000266  1               ; if the timer is at zero then update the index to the next char
+000266  1               ; FIXME What if we miss the ZERO? This might explain the erratic timing
+000266  1               ;-----------------------------------------------------------------------------
+000266  1  AD 07 17                 LDA $1707           ; check the timer
+000269  1  F0 05                    BEQ DONE
+00026B  1  AD 06 17                 LDA $1706           ; restore divider etc (a read will accomplish this)
+00026E  1  E6 00                    INC $00             ; increment data index low byte
+000270  1               
+000270  1               
+000270  1               
+000270  1  4C 14 02     DONE        jmp DISPLOOP        ; refresh the display
+000273  1               
+000273  1               
+000273  1               DATA
+000273  1               
+000273  1                           .include "include/data-level-1.s"
+000273  2               METEOR_UP   = %01100011
+000273  2               METEOR_DN   = %01011100
+000273  2               
+000273  2                           ; Alphabet
+000273  2                           ; TODO add a specific clear screen function
+000273  2               
+000273  2                           ; data in groups of 6
+000273  2  00 00 00 00              .byte LSPC,LSPC,LSPC,LSPC,LSPC
+000277  2  00           
+000278  2  5C           DATAROCK    .byte METEOR_DN
+000279  2  00 00 00 00              .byte LSPC,LSPC,LSPC,LSPC,LSPC
+00027D  2  00           
+00027E  2  EA                       .byte DATATERM
+00027F  2               
+00027F  2               
+00027F  1                           ;PUT include/data-level-1.s
+00027F  1               

@@ -2,6 +2,10 @@
 ; Application Equates
 ;-----------------------------------------------------------------------------
 
-DATAINDEX   EQU $02             ; start index
-DATATERM    EQU $EA             ; data terminator
+DATAINDEX   = $02             ; start index
+DATATERM    = $EA             ; data terminator
+
+SHIPTOP     = %00000001 
+SHIPMID     = %01000000
+SHIPBOT     = %00001000
 

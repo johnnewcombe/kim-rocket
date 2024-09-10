@@ -8,6 +8,6 @@
     dsk rocket      ; name of binary file
     org $0200       ;
 
-    asm rocket.asm
+    asm rocket.s
     sna rocket     ; segment name
 
