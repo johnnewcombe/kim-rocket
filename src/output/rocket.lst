@@ -353,5 +353,4 @@ Current file: rocket.s
 00027E  2  EA                       .byte DATATERM
 00027F  2               
 00027F  2               
-00027F  1                           ;PUT include/data-level-1.s
 00027F  1               

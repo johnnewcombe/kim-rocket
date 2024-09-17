@@ -1,2 +1,3 @@
-# KIM-1 Programs
+# kim-rocket
 
+Work in progress!

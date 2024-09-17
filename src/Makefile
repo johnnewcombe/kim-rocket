@@ -1,19 +1,20 @@
 
 ORG = 0x0200
+NAME = rocket
 
-all:	rocket.ptp
+all:	$(NAME).ptp
 
-rocket.ptp: rocket.bin Makefile
+$(NAME).ptp: $(NAME).bin Makefile
 	
-	srec_cat ./output/rocket.bin -binary -offset $(ORG) -o ./output/rocket.ptp -MOS_Technologies
+	srec_cat ./output/$(NAME).bin -binary -offset $(ORG) -o ./output/$(NAME).ptp -MOS_Technologies
 
-rocket.bin: rocket.o
+$(NAME).bin: $(NAME).o
 	
-	ld65 -t none -vm -m ./output/rocket.map -o ./output/rocket.bin ./output/rocket.o
+	ld65 -t none -vm -m ./output/$(NAME).map -o ./output/$(NAME).bin ./output/$(NAME).o
 
-rocket.o: rocket.s
+$(NAME).o: $(NAME).s
 	
-	ca65 -v -l ./output/rocket.lst -o ./output/rocket.o --feature labels_without_colons rocket.s
+	ca65 -v -l ./output/$(NAME).lst -o ./output/$(NAME).o --feature labels_without_colons $(NAME).s
 
 clean:
 	
